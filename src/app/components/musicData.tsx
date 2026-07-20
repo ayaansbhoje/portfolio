@@ -20,7 +20,7 @@ export const ALBUMS: Album[] = [
     accent: '#FF2D78', cover: '/assets/vinyl_cover.jpeg',
     tracks: [
       { id: 'cas-1', title: 'Apocalypse',                    src: '/music/apocolypse.mp3' },
-      { id: 'cas-2', title: "Nothing's Gonna Hurt You Baby", src: '/music/Cigarette_After_Sex_-_Nothing_s_Gonna_Hurt_You_Baby_(mp3.pm).mp3' },
+      { id: 'cas-2', title: "Nothing's Gonna Hurt You Baby", src: '/music/cas_Nothing_gonna_hurt_you.mp3' },
     ],
   },
   {
