@@ -7,23 +7,16 @@ interface CodeBootScreenProps {
   onRun: () => void;
 }
 
+// trimmed snippet — short enough that the RUN button fits on screen
 const CODE_LINES = [
-  { indent: 0, content: '<!DOCTYPE html>', color: 'text-muted-foreground' },
   { indent: 0, content: '<html lang="en">', color: 'text-primary' },
   { indent: 1, content: '<head>', color: 'text-primary' },
-  { indent: 2, content: '<meta charset="UTF-8" />', color: 'text-muted-foreground' },
-  { indent: 2, content: '<title>NeoDesk — Portfolio</title>', color: 'text-accent' },
-  { indent: 2, content: '<link rel="stylesheet" href="neodesk.css" />', color: 'text-secondary' },
+  { indent: 2, content: '<title>NeoDesk — Ayaan Bhoje</title>', color: 'text-accent' },
   { indent: 1, content: '</head>', color: 'text-primary' },
   { indent: 1, content: '<body class="cyberpunk lofi">', color: 'text-primary' },
-  { indent: 2, content: '<div id="desk-scene">', color: 'text-primary' },
-  { indent: 3, content: '<Laptop clickable={true} />', color: 'text-accent' },
-  { indent: 3, content: '<CoffeeMug steam={true} animated={true} />', color: 'text-accent' },
-  { indent: 3, content: '<Phone socials={handles} />', color: 'text-accent' },
-  { indent: 3, content: '<Journal pages={experience} />', color: 'text-accent' },
-  { indent: 3, content: '<Window cityscape="neo-tokyo" sunset={true} />', color: 'text-muted-foreground' },
-  { indent: 2, content: '</div>', color: 'text-primary' },
-  { indent: 2, content: '<script src="interactions.js"></script>', color: 'text-secondary' },
+  { indent: 2, content: '<Laptop projects={ayaan.work} />', color: 'text-accent' },
+  { indent: 2, content: '<Turntable vinyl={true} />', color: 'text-accent' },
+  { indent: 2, content: '<Window city="neo-tokyo" />', color: 'text-muted-foreground' },
   { indent: 1, content: '</body>', color: 'text-primary' },
   { indent: 0, content: '</html>', color: 'text-primary' },
 ];
@@ -80,19 +73,19 @@ export default function CodeBootScreen({ onRun }: CodeBootScreenProps) {
     };
   }, []);
 
-  // Type in code lines
+  // Type in code lines (faster so the button appears quickly)
   useEffect(() => {
     if (visibleLines < CODE_LINES.length) {
-      const t = setTimeout(() => setVisibleLines(v => v + 1), 120);
+      const t = setTimeout(() => setVisibleLines(v => v + 1), 90);
       return () => clearTimeout(t);
     } else {
-      const t = setTimeout(() => setShowButton(true), 400);
+      const t = setTimeout(() => setShowButton(true), 300);
       return () => clearTimeout(t);
     }
   }, [visibleLines]);
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-8">
+    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-6">
       {/* Matrix rain background */}
       <canvas
         ref={canvasRef}
@@ -104,11 +97,11 @@ export default function CodeBootScreen({ onRun }: CodeBootScreenProps) {
       <div className="absolute inset-0 blob-bg pointer-events-none" />
 
       {/* Header */}
-      <div className="relative z-10 w-full max-w-3xl mb-8">
-        <div className="flex items-center justify-between mb-6">
+      <div className="relative z-10 w-full max-w-xl mb-4">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <AppLogo size={36} />
-            <span className="font-mono text-primary text-lg font-bold tracking-wider text-glow-cyan">
+            <AppLogo size={32} />
+            <span className="font-mono text-primary text-base font-bold tracking-wider text-glow-cyan">
               NeoDesk
             </span>
           </div>
@@ -118,8 +111,8 @@ export default function CodeBootScreen({ onRun }: CodeBootScreenProps) {
         </div>
 
         {/* Status bar */}
-        <div className="flex items-center gap-4 font-mono text-xs text-muted-foreground mb-4 border-b border-border pb-4">
-          <span className="text-accent">neodesk</span>
+        <div className="flex items-center gap-4 font-mono text-xs text-muted-foreground border-b border-border pb-3">
+          <span className="text-accent">ayaan@neodesk</span>
           <span>~</span>
           <span className="text-secondary">portfolio.html</span>
           <span className="ml-auto text-primary">UTF-8</span>
@@ -127,33 +120,32 @@ export default function CodeBootScreen({ onRun }: CodeBootScreenProps) {
         </div>
       </div>
 
-      {/* Terminal window */}
-      <div className="relative z-10 w-full max-w-3xl glass-dark border border-border rounded-xl overflow-hidden shadow-2xl"
+      {/* Terminal window — compact */}
+      <div className="relative z-10 w-full max-w-xl glass-dark border border-border rounded-xl overflow-hidden shadow-2xl"
         style={{ boxShadow: '0 0 40px rgba(0, 245, 255, 0.08), 0 20px 60px rgba(0,0,0,0.6)' }}>
 
         {/* Terminal title bar */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-card">
-          <div className="w-3 h-3 rounded-full bg-secondary opacity-80" />
-          <div className="w-3 h-3 rounded-full bg-accent opacity-80" />
-          <div className="w-3 h-3 rounded-full bg-primary opacity-80" />
-          <span className="ml-4 font-mono text-xs text-muted-foreground tracking-widest">
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-card">
+          <div className="w-2.5 h-2.5 rounded-full bg-secondary opacity-80" />
+          <div className="w-2.5 h-2.5 rounded-full bg-accent opacity-80" />
+          <div className="w-2.5 h-2.5 rounded-full bg-primary opacity-80" />
+          <span className="ml-3 font-mono text-xs text-muted-foreground tracking-widest">
             portfolio.html — NeoDesk Editor
           </span>
         </div>
 
-        {/* Code content */}
-        <div className="p-6 font-mono text-sm min-h-[380px]">
-          {/* Line numbers + code */}
+        {/* Code content — small text, tight leading, no fixed tall min-height */}
+        <div className="px-5 py-4 font-mono text-xs" style={{ minHeight: 0 }}>
           {CODE_LINES.slice(0, visibleLines).map((line, i) => (
             <div
               key={i}
-              className="flex gap-4 leading-7 code-line"
-              style={{ animationDelay: `${i * 0.05}s`, animationFillMode: 'forwards' }}
+              className="flex gap-3 leading-6 code-line"
+              style={{ animationDelay: `${i * 0.04}s`, animationFillMode: 'forwards' }}
             >
-              <span className="text-muted-foreground select-none w-6 text-right shrink-0 opacity-40">
+              <span className="text-muted-foreground select-none w-5 text-right shrink-0 opacity-40">
                 {i + 1}
               </span>
-              <span className={line.color} style={{ paddingLeft: `${line.indent * 16}px` }}>
+              <span className={line.color} style={{ paddingLeft: `${line.indent * 14}px` }}>
                 {line.content}
               </span>
             </div>
@@ -161,11 +153,11 @@ export default function CodeBootScreen({ onRun }: CodeBootScreenProps) {
 
           {/* Cursor */}
           {visibleLines <= CODE_LINES.length && (
-            <div className="flex gap-4 leading-7">
-              <span className="text-muted-foreground select-none w-6 text-right shrink-0 opacity-40">
+            <div className="flex gap-3 leading-6">
+              <span className="text-muted-foreground select-none w-5 text-right shrink-0 opacity-40">
                 {visibleLines + 1}
               </span>
-              <span className="inline-block w-2 h-5 bg-primary cursor-blink" />
+              <span className="inline-block w-2 h-4 bg-primary cursor-blink" />
             </div>
           )}
         </div>
@@ -173,16 +165,14 @@ export default function CodeBootScreen({ onRun }: CodeBootScreenProps) {
 
       {/* Run button */}
       {showButton && (
-        <div
-          className="relative z-10 mt-8 slide-up-modal"
-        >
+        <div className="relative z-10 mt-6 slide-up-modal">
           <button
             onClick={onRun}
-            className="neon-btn px-10 py-4 rounded-lg text-sm font-mono font-bold tracking-widest pulse-glow"
+            className="neon-btn px-10 py-3.5 rounded-lg text-sm font-mono font-bold tracking-widest pulse-glow"
           >
             ▶ RUN PROGRAM
           </button>
-          <p className="text-center mt-3 font-mono text-xs text-muted-foreground tracking-widest">
+          <p className="text-center mt-2 font-mono text-xs text-muted-foreground tracking-widest">
             EXECUTE portfolio.html
           </p>
         </div>

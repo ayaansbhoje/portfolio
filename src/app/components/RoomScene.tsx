@@ -17,7 +17,7 @@ import { DeskLamp } from './room/DeskLamp';
 import { Speaker, Headphones, Mug, DeskClock } from './room/DeskProps';
 import { Shelf } from './room/Shelf';
 import { Helmet, ShelfPlant, Sneaker } from './room/ShelfDecor';
-import { PosterFrame, LavaLamp, IdeaBoard, FloorLamp } from './room/Decor';
+import { PosterFrame, LavaLamp, IdeaBoard, FloorLamp, JerseyFrame } from './room/Decor';
 import { RecordConsole, Turntable, AlbumStand } from './room/RecordCorner';
 import { Laptop, Phone, Journal } from './room/Interactive';
 import { RetroTV } from './room/RetroTV';
@@ -91,7 +91,7 @@ export default function RoomScene({ timeOfDay, onSelect, musicPlaying = false, r
   const floorTex = useMemo(() => {
     const t = new THREE.CanvasTexture(makeWoodFloorCanvas());
     t.wrapS = t.wrapT = THREE.RepeatWrapping;
-    t.repeat.set(4, 4);                // ← lower = wider planks, higher = more/tighter planks
+    t.repeat.set(4, 4);
     t.colorSpace = THREE.SRGBColorSpace;
     t.anisotropy = 8;
     return t;
@@ -106,8 +106,7 @@ export default function RoomScene({ timeOfDay, onSelect, musicPlaying = false, r
 
   useEffect(() => () => { floorTex.dispose(); rugTex.dispose(); }, [floorTex, rugTex]);
 
-  // album shown on the display stand — same as ALBUMS[0] but with a custom cover image.
-  // file lives at public/assets/vinyl_cover.jpeg → served from /assets/vinyl_cover.jpeg
+  // album shown on the display stand
   const displayAlbum = useMemo(() => ({ ...ALBUMS[0], cover: '/assets/vinyl_cover.jpeg' }), []);
 
   useFrame((state, dt) => {
@@ -136,7 +135,6 @@ export default function RoomScene({ timeOfDay, onSelect, musicPlaying = false, r
       windowLightRef.current.color.lerp(_c.set(p.sky.c), k);
       windowLightRef.current.intensity = THREE.MathUtils.lerp(windowLightRef.current.intensity, p.sky.i * 1.6, k);
     }
-    // floor turns glossy at night so the neon streaks across it (wet-street look)
     if (floorMatRef.current) {
       floorMatRef.current.roughness = THREE.MathUtils.lerp(floorMatRef.current.roughness, isNight ? 0.42 : 0.7, k);
       floorMatRef.current.metalness = THREE.MathUtils.lerp(floorMatRef.current.metalness, isNight ? 0.32 : 0.06, k);
@@ -190,28 +188,26 @@ export default function RoomScene({ timeOfDay, onSelect, musicPlaying = false, r
       <Sneaker position={[-5.05, 5.11, -5.4]} rotation={[0, 0.5, 0]} />
       <Sneaker position={[-4.68, 5.11, -5.5]} rotation={[0, -0.35, 0]} />
 
-      {/* two posters on the LEFT wall (x=-8), hung above the bed and rotated to face into the room.
-          Drop PNGs into /public/art/ (poster-3.png / poster-4.png) and they'll replace the glow placeholders. */}
-      <PosterFrame position={[-7.9, 3.7, -3.3]}  rotation={[0, Math.PI / 2, 0]} w={1.5} h={2.1} src="/art/poster-3.png" accent={accent} />
+      {/* LEFT wall (x=-8), above the bed:
+          → framed football jersey (blue/red stripes · AYAAN · 14) replaces the old poster-3 frame
+          → poster-4 frame stays */}
+      <JerseyFrame position={[-7.9, 3.7, -3.3]} rotation={[0, Math.PI / 2, 0]} w={1.5} h={2.1} name="AYAAN" number="14" />
       <PosterFrame position={[-7.9, 3.7, -1.45]} rotation={[0, Math.PI / 2, 0]} w={1.5} h={2.1} src="/art/poster-4.png" accent={accent} />
 
       {/* two large poster frames filling the wall to the right of the desk.
-          Drop PNGs into /public (e.g. public/art/poster-1.png) and set src below. */}
+          The frame nearest the record corner shows the Fred Again poster. */}
       <PosterFrame position={[4.75, 3.05, -5.8]} w={1.7} h={2.9} src="/art/poster-1.png" accent={accent} />
-      <PosterFrame position={[6.65, 3.05, -5.8]} w={1.7} h={2.9} src="/art/poster-2.png" accent={accent} />
+      <PosterFrame position={[6.65, 3.05, -5.8]} w={1.7} h={2.9} src="/assets/fred_agai_poster.jpg" accent={accent} />
       {/* matching lit shelf above the frames (gallery-style down-lighting) */}
       <Shelf position={[5.7, 4.85, -5.5]} width={3.95} fixtures={4} reach={4.2} />
       {/* lava lamp on the right shelf — bubbles + glows only at night */}
       <LavaLamp position={[6.6, 4.91, -5.45]} timeOfDay={timeOfDay} scale={0.72} color="#c85f1e" blobColor="#e8451e" glowColor="#ffb42a" />
 
-      {/* === RECORD CORNER — right wall, back section (clear of the door) ===
-          Move/rotate the whole thing with this group's position + rotation. */}
+      {/* === RECORD CORNER — right wall, back section (clear of the door) === */}
       <group position={[7.35, 0, -3.9]} rotation={[0, -Math.PI / 2, 0]}>
         <RecordConsole />
         <Turntable musicPlaying={musicPlaying} onSelect={() => onSelect('music')} />
-        {/* single album on a display stand beside the turntable — faces into the room */}
         <AlbumStand album={displayAlbum} position={[0.97, 1.45, 0]} rotation={[0, -0.1, 0]} size={0.74} />
-        {/* clickable-affordance ring above the turntable */}
         <ClickHint position={[0, 2.05, 0.02]} color="#b060ff" radius={0.24} visible={revealed} />
       </group>
 
@@ -221,17 +217,15 @@ export default function RoomScene({ timeOfDay, onSelect, musicPlaying = false, r
       {/* retro game-station showreel — front-left */}
       <RetroTV position={[-5.4, 0, 2.4]} rotation={[0, 0.5, 0]} timeOfDay={timeOfDay} scale={1.0}
         onSelect={() => onSelect('tv')} />
-      {/* clickable-affordance ring above the retro TV */}
       <ClickHint position={[-5.4, 2.55, 2.4]} color="#3ea9ff" radius={0.28} visible={revealed} />
 
       {/* desk cluster — centered (x=0), pushed toward the window wall (DESK_Z) */}
       <group position={[DESK_X, 0, DESK_Z]}>
-        {/* cozy woven area rug — bigger now (travels with the desk area) */}
+        {/* cozy woven area rug */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 1.4]} receiveShadow>
           <circleGeometry args={[5.6, 64]} />
           <meshStandardMaterial map={rugTex} color="#ffffff" roughness={0.95} metalness={0} />
         </mesh>
-        {/* subtle neon piping around the rug — glows only at night */}
         <NeonRing radius={5.6} tube={0.03} color="#00e5ff" position={[0, 0.02, 1.4]} rotation={[-Math.PI / 2, 0, 0]} night={isNight} nightI={0.9} dayI={0} />
 
         <Desk />
@@ -247,8 +241,9 @@ export default function RoomScene({ timeOfDay, onSelect, musicPlaying = false, r
         <Phone onSelect={() => onSelect('phone')} />
         <Journal onSelect={() => onSelect('journal')} />
 
-        {/* clickable-affordance rings — fade in once the room is revealed (positions are local to the desk group) */}
-        <ClickHint position={[0, 1.98, 0.12]}  color="#00e5ff" radius={0.26} visible={revealed} />
+        {/* clickable-affordance rings — laptop ring raised (was y=1.98) so the
+            screen glow no longer washes it out */}
+        <ClickHint position={[0, 2.45, 0.12]}  color="#00e5ff" radius={0.26} visible={revealed} />
         <ClickHint position={[2.2, 1.82, 0.7]} color="#ff2d78" radius={0.16} visible={revealed} />
         <ClickHint position={[-2.1, 1.8, 0.55]} color="#ffb347" radius={0.18} visible={revealed} />
       </group>

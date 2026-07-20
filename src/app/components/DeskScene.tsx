@@ -61,7 +61,7 @@ function IntroOverlay({ progressRef }: { progressRef: React.MutableRefObject<num
           fontSize: 'clamp(10px,1.1vw,13px)', letterSpacing: '0.45em', textTransform: 'uppercase',
           color: 'rgba(0,245,255,0.75)', textShadow: '0 0 12px rgba(0,245,255,0.5)',
           marginBottom: '14px', paddingLeft: '0.45em',
-        }}>Kai Nakamura · Portfolio</div>
+        }}>Ayaan Bhoje · Portfolio</div>
 
         <h1 className="font-mono" style={{
           fontSize: 'clamp(1.9rem,5.4vw,4.4rem)', fontWeight: 800, lineHeight: 1.05, margin: 0,
@@ -87,6 +87,67 @@ function IntroOverlay({ progressRef }: { progressRef: React.MutableRefObject<num
   );
 }
 
+/* ── welcome / how-to-explore guide, shown once the intro zoom-out completes ── */
+function WelcomeGuide({ onClose }: { onClose: () => void }) {
+  const items = [
+    { icon: '💻', name: 'Laptop', color: '#00F5FF', desc: 'My projects, skills & about me' },
+    { icon: '📱', name: 'Phone', color: '#FF2D78', desc: 'Social links — GitHub, LinkedIn & more' },
+    { icon: '📖', name: 'Journal', color: '#FFB347', desc: 'Experience & education log' },
+    { icon: '🎶', name: 'Turntable', color: '#b060ff', desc: 'Pick a vinyl — music keeps playing while you explore' },
+    { icon: '📺', name: 'Retro TV', color: '#3ea9ff', desc: 'Showreel channels' },
+  ];
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="slide-up-modal w-full max-w-md glass-dark border border-border rounded-2xl overflow-hidden"
+        style={{ boxShadow: '0 0 60px rgba(0,245,255,0.15), 0 30px 80px rgba(0,0,0,0.8)' }}>
+
+        {/* header */}
+        <div className="px-6 pt-6 pb-4 text-center">
+          <div className="flex justify-center mb-3"><AppLogo size={40} /></div>
+          <h2 className="font-mono text-lg font-bold" style={{ color: '#00F5FF', textShadow: '0 0 14px rgba(0,245,255,0.5)' }}>
+            Welcome to my room!
+          </h2>
+          <p className="font-mono text-xs text-muted-foreground mt-2 leading-relaxed">
+            <span style={{ color: '#E8D5FF' }}>🖱 Click &amp; drag</span> to look around ·{' '}
+            <span style={{ color: '#E8D5FF' }}>scroll</span> to zoom.<br />
+            Glowing rings mark the clickable objects:
+          </p>
+        </div>
+
+        {/* clickable items list */}
+        <div className="px-6 pb-4 space-y-2">
+          {items.map((it) => (
+            <div key={it.name} className="flex items-center gap-3 p-2.5 rounded-xl border"
+              style={{ background: `${it.color}0d`, borderColor: `${it.color}33` }}>
+              <span className="text-xl shrink-0">{it.icon}</span>
+              <div className="min-w-0">
+                <div className="font-mono text-xs font-bold" style={{ color: it.color }}>{it.name}</div>
+                <div className="font-mono text-[11px] text-muted-foreground truncate">{it.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* tip + CTA */}
+        <div className="px-6 pb-6 text-center">
+          <p className="font-mono text-[11px] text-muted-foreground mb-4">
+            💡 Tip: switch <span style={{ color: '#FFD060' }}>Morning</span> /{' '}
+            <span style={{ color: '#FF9A40' }}>Afternoon</span> /{' '}
+            <span style={{ color: '#00F5FF' }}>Night</span> from the top bar — the room relights itself.
+          </p>
+          <button onClick={onClose} className="neon-btn px-8 py-3 rounded-lg text-xs">
+            START EXPLORING →
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DeskScene() {
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('night');
@@ -96,6 +157,17 @@ export default function DeskScene() {
   const [introComplete, setIntroComplete] = useState(false);
   const completedRef = useRef(false);
   useEffect(() => { completedRef.current = introComplete; }, [introComplete]);
+
+  // --- welcome guide state (auto-opens once after intro) ---
+  const [showGuide, setShowGuide] = useState(false);
+  const guideShownRef = useRef(false);
+  useEffect(() => {
+    if (introComplete && !guideShownRef.current) {
+      guideShownRef.current = true;
+      const t = setTimeout(() => setShowGuide(true), 700);   // small beat after the camera settles
+      return () => clearTimeout(t);
+    }
+  }, [introComplete]);
 
   // capture scroll / touch / keys → advance progress (only until the intro finishes)
   useEffect(() => {
@@ -128,8 +200,8 @@ export default function DeskScene() {
     };
   }, []);
 
-  // ignore object clicks until the cinematic finishes (remove this guard to allow early clicks)
-  const handleSelect = (t: SelectTarget) => { if (completedRef.current) setActiveModal(t); };
+  // ignore object clicks until the cinematic finishes (and while the guide is open)
+  const handleSelect = (t: SelectTarget) => { if (completedRef.current && !showGuide) setActiveModal(t); };
 
   // --- music player state ---
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -189,6 +261,9 @@ export default function DeskScene() {
       {/* cinematic title (only meaningful before the intro completes) */}
       {!introComplete && <IntroOverlay progressRef={introRef} />}
 
+      {/* welcome / how-to-explore guide */}
+      {showGuide && <WelcomeGuide onClose={() => setShowGuide(false)} />}
+
       {/* === TOP NAV BAR === */}
       <div className="absolute top-0 left-0 right-0 z-30 px-6 py-4 flex items-center justify-between pointer-events-none"
         style={chrome}>
@@ -218,10 +293,24 @@ export default function DeskScene() {
           ))}
         </div>
 
-        <div className="font-mono text-xs tracking-widest flex items-center gap-2 px-3 py-1.5 rounded-full pointer-events-auto"
-          style={{ background: 'rgba(13,6,24,0.7)', border: '1px solid rgba(0,245,255,0.2)', backdropFilter: 'blur(12px)', color: 'rgba(200,180,255,0.7)' }}>
-          <span style={{ color: '#00F5FF', fontSize: '8px' }}>●</span>
-          PORTFOLIO_LOADED
+        <div className="flex items-center gap-2 pointer-events-auto">
+          {/* reopen the guide anytime */}
+          <button onClick={() => setShowGuide(true)}
+            className="font-mono text-xs flex items-center justify-center rounded-full"
+            style={{
+              width: 30, height: 30,
+              background: 'rgba(13,6,24,0.7)', border: '1px solid rgba(0,245,255,0.3)',
+              backdropFilter: 'blur(12px)', color: '#00F5FF', cursor: 'pointer',
+              textShadow: '0 0 8px rgba(0,245,255,0.5)',
+            }}
+            title="How to explore">
+            ?
+          </button>
+          <div className="font-mono text-xs tracking-widest flex items-center gap-2 px-3 py-1.5 rounded-full"
+            style={{ background: 'rgba(13,6,24,0.7)', border: '1px solid rgba(0,245,255,0.2)', backdropFilter: 'blur(12px)', color: 'rgba(200,180,255,0.7)' }}>
+            <span style={{ color: '#00F5FF', fontSize: '8px' }}>●</span>
+            PORTFOLIO_LOADED
+          </div>
         </div>
       </div>
 

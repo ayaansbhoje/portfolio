@@ -17,13 +17,20 @@ interface RoomCanvasProps {
   onIntroComplete: () => void;
 }
 
-/* ── cinematic intro keyframes — tune these two poses to taste ──
+/* ── cinematic intro keyframes ──
    CLOSE = tight on the desk (all desk objects visible)
-   WIDE  = whole room (this MUST match OrbitControls' start pose) */
+   WIDE  = whole room. IMPORTANT: WIDE must sit INSIDE the OrbitControls
+   limits below (distance ≤ maxDistance, azimuth within ±AZ) so there's
+   no snap when the controls take over after the intro. */
 const CLOSE_POS = new THREE.Vector3(1.4, 2.5, 3.4);
 const CLOSE_TGT = new THREE.Vector3(0, 1.75, -1.9);
-const WIDE_POS  = new THREE.Vector3(7, 4.5, 10);
+const WIDE_POS  = new THREE.Vector3(4.2, 4.2, 9.4);
 const WIDE_TGT  = new THREE.Vector3(0, 1.5, 0);
+
+// camera limits — tight enough that you can never swing past the side walls
+const AZ_LIMIT = 0.5;        // ± ~28.5° (was ±45°, which let you see behind the walls)
+const MIN_DIST = 7;
+const MAX_DIST = 11;         // at max zoom-out + max swing, camera x stays well inside x=±8 walls
 
 function IntroRig({ progressRef, onComplete, active }: {
   progressRef: React.MutableRefObject<number>; onComplete: () => void; active: boolean;
@@ -87,12 +94,12 @@ export default function RoomCanvas({
             target={[0, 1.5, 0]}
             enablePan={false}
             enableZoom
-            minDistance={7}
-            maxDistance={14}
-            minPolarAngle={0.8}
-            maxPolarAngle={1.45}
-            minAzimuthAngle={-Math.PI / 4}
-            maxAzimuthAngle={Math.PI / 4}
+            minDistance={MIN_DIST}
+            maxDistance={MAX_DIST}
+            minPolarAngle={0.85}
+            maxPolarAngle={1.42}
+            minAzimuthAngle={-AZ_LIMIT}
+            maxAzimuthAngle={AZ_LIMIT}
             enableDamping
             dampingFactor={0.08}
           />

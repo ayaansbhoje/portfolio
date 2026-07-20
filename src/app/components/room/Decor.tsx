@@ -47,6 +47,144 @@ export function PosterFrame({ position, rotation = [0, 0, 0], src, accent, w = 1
   );
 }
 
+/* ---------- framed football jersey (procedural — blue/red stripes, name + number) ---------- */
+
+function makeJerseyCanvas(name = 'AYAAN', number = '14') {
+  const c = document.createElement('canvas');
+  c.width = 760; c.height = 900;
+  const ctx = c.getContext('2d')!;
+  const W = c.width, H = c.height;
+  ctx.clearRect(0, 0, W, H);   // transparent outside the jersey
+
+  const BLUE = '#16256b';
+  const RED = '#9c1236';
+  const TRIM = '#d8a63f';      // subtle gold trim
+
+  // --- jersey silhouette path (body + sleeves + v-neck) ---
+  const jersey = new Path2D();
+  jersey.moveTo(310, 118);                       // left neck edge
+  jersey.lineTo(232, 132);                       // left shoulder
+  jersey.quadraticCurveTo(140, 165, 78, 268);    // left sleeve top edge
+  jersey.lineTo(120, 402);                       // left sleeve cuff (outer)
+  jersey.lineTo(226, 344);                       // left underarm
+  jersey.lineTo(210, 830);                       // left body side
+  jersey.quadraticCurveTo(380, 856, 550, 830);   // hem
+  jersey.lineTo(534, 344);                       // right body side
+  jersey.lineTo(640, 402);                       // right underarm → cuff
+  jersey.lineTo(682, 268);                       // right sleeve cuff (outer)
+  jersey.quadraticCurveTo(620, 165, 528, 132);   // right sleeve top edge
+  jersey.lineTo(450, 118);                       // right neck edge
+  // v-neck
+  jersey.quadraticCurveTo(410, 190, 380, 204);
+  jersey.quadraticCurveTo(350, 190, 310, 118);
+  jersey.closePath();
+
+  // --- alternating vertical stripes, clipped to the jersey ---
+  ctx.save();
+  ctx.clip(jersey);
+  const stripeW = 76;
+  for (let x = 0, i = 0; x < W + stripeW; x += stripeW, i++) {
+    ctx.fillStyle = i % 2 === 0 ? BLUE : RED;
+    ctx.fillRect(x, 0, stripeW, H);
+  }
+  // soft fabric shading (left + right)
+  const shadeL = ctx.createLinearGradient(180, 0, 330, 0);
+  shadeL.addColorStop(0, 'rgba(0,0,0,0.30)'); shadeL.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = shadeL; ctx.fillRect(150, 100, 220, H);
+  const shadeR = ctx.createLinearGradient(590, 0, 430, 0);
+  shadeR.addColorStop(0, 'rgba(0,0,0,0.30)'); shadeR.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = shadeR; ctx.fillRect(430, 100, 220, H);
+  // sleeve cuffs (darker band)
+  ctx.fillStyle = 'rgba(8,10,24,0.85)';
+  ctx.save();
+  ctx.translate(96, 330); ctx.rotate(-0.55); ctx.fillRect(-20, 0, 150, 26); ctx.restore();
+  ctx.save();
+  ctx.translate(664, 330); ctx.rotate(0.55); ctx.fillRect(-130, 0, 150, 26); ctx.restore();
+  ctx.restore();
+
+  // --- outline the jersey ---
+  ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+  ctx.lineWidth = 5;
+  ctx.stroke(jersey);
+
+  // --- collar trim ---
+  ctx.save();
+  ctx.strokeStyle = TRIM;
+  ctx.lineWidth = 8;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(312, 124);
+  ctx.quadraticCurveTo(352, 194, 380, 208);
+  ctx.quadraticCurveTo(408, 194, 448, 124);
+  ctx.stroke();
+  ctx.restore();
+
+  // --- name + number ---
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#f4f0e6';
+  ctx.strokeStyle = TRIM;
+
+  ctx.font = "bold 64px 'Arial Narrow', Arial, sans-serif";
+  ctx.lineWidth = 2.5;
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 3;
+  ctx.fillText(name.toUpperCase(), 380, 318);
+  ctx.restore();
+  ctx.strokeText(name.toUpperCase(), 380, 318);
+
+  ctx.font = "bold 250px 'Arial Narrow', Arial, sans-serif";
+  ctx.lineWidth = 6;
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 12; ctx.shadowOffsetY = 5;
+  ctx.fillText(number, 380, 545);
+  ctx.restore();
+  ctx.strokeText(number, 380, 545);
+
+  return c;
+}
+
+/* framed jersey for the wall — like a collector's shadow box */
+export function JerseyFrame({
+  position, rotation = [0, 0, 0], w = 1.5, h = 2.1, name = 'AYAAN', number = '14',
+}: {
+  position: [number, number, number]; rotation?: [number, number, number];
+  w?: number; h?: number; name?: string; number?: string;
+}) {
+  const tex = useMemo(() => {
+    const t = new THREE.CanvasTexture(makeJerseyCanvas(name, number));
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 8;
+    return t;
+  }, [name, number]);
+  useEffect(() => () => tex.dispose(), [tex]);
+
+  const border = 0.09, depth = 0.09;
+  return (
+    <group position={position} rotation={rotation as any}>
+      {/* frame border */}
+      <RoundedBox args={[w + border * 2, h + border * 2, depth]} radius={0.02} smoothness={3} castShadow>
+        <meshStandardMaterial color="#2a2018" metalness={0.25} roughness={0.55} />
+      </RoundedBox>
+      {/* dark matte backing */}
+      <mesh position={[0, 0, depth / 2 + 0.001]}>
+        <planeGeometry args={[w, h]} />
+        <meshStandardMaterial color="#0c0f1c" roughness={0.85} />
+      </mesh>
+      {/* the jersey (transparent canvas) — slightly emissive so it reads at night */}
+      <mesh position={[0, 0, depth / 2 + 0.004]}>
+        <planeGeometry args={[w * 0.92, h * 0.92 * (900 / 760) * (w / h) * 0.98]} />
+        <meshStandardMaterial map={tex} transparent emissiveMap={tex} emissive="#ffffff" emissiveIntensity={0.22} roughness={0.7} toneMapped={false} />
+      </mesh>
+      {/* glass sheen */}
+      <mesh position={[0, h * 0.22, depth / 2 + 0.006]} rotation={[0, 0, -0.25]}>
+        <planeGeometry args={[w * 0.9, h * 0.16]} />
+        <meshBasicMaterial color="#bfe0ff" transparent opacity={0.05} toneMapped={false} />
+      </mesh>
+    </group>
+  );
+}
+
 /* ---------- lava lamp (blobs animate + glow only at night) ---------- */
 
 export function LavaLamp({
