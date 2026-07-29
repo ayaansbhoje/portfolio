@@ -1,23 +1,32 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { TV_CHANNELS } from './tvData';
 
 interface TvModalProps { onClose: () => void; }
+
+/* The screen is a FIXED size - it never changes when you switch channels.
+   Clips are fitted inside it with object-fit: contain, so every video
+   still plays WHOLE (nothing cropped off the sides, nothing cut off the
+   top or bottom); a clip that doesn't match the screen shape simply gets
+   black bars, exactly like a real TV.
+   Want a boxier retro set? Change SCREEN_RATIO to 4 / 3. */
+const SCREEN_RATIO = 16 / 9;
+const MAX_H = 62;              // vh - caps screen height on short viewports
 
 function ChannelLogo({ logo, brand, accent }: { logo: string; brand: string; accent: string }) {
   const [ok, setOk] = useState(true);
   const isImg = logo.startsWith('/');
   if (isImg && ok) {
     return <img src={logo} alt={brand} onError={() => setOk(false)}
-      style={{ height: 40, width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.6))' }} />;
+      style={{ height: 34, width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.7))' }} />;
   }
   return (
     <span style={{
-      fontFamily: 'monospace', fontWeight: 700, fontSize: 22, color: accent,
-      textShadow: `0 0 10px ${accent}88`, display: 'inline-flex', alignItems: 'center', gap: 8,
+      fontFamily: 'monospace', fontWeight: 700, fontSize: 18, color: accent,
+      textShadow: `0 0 10px ${accent}88`, display: 'inline-flex', alignItems: 'center', gap: 7,
     }}>
-      <span style={{ fontSize: 26 }}>{isImg ? '📺' : logo}</span>{brand}
+      <span style={{ fontSize: 22 }}>{isImg ? '\u{1F4FA}' : logo}</span>{brand}
     </span>
   );
 }
@@ -29,13 +38,19 @@ export default function TvModal({ onClose }: TvModalProps) {
   const rafRef = useRef(0);
   const ch = TV_CHANNELS[channel];
 
-  const goChannel = (idx: number) => {
-    if (idx === channel && !switching) return;
+  const goChannel = useCallback((idx: number) => {
     setChannel(idx);
     setSwitching(true);
-  };
-  const prev = () => goChannel((channel - 1 + TV_CHANNELS.length) % TV_CHANNELS.length);
-  const next = () => goChannel((channel + 1) % TV_CHANNELS.length);
+  }, []);
+
+  const prev = useCallback(
+    () => goChannel((channel - 1 + TV_CHANNELS.length) % TV_CHANNELS.length),
+    [channel, goChannel],
+  );
+  const next = useCallback(
+    () => goChannel((channel + 1) % TV_CHANNELS.length),
+    [channel, goChannel],
+  );
 
   // white-noise static while switching channels
   useEffect(() => {
@@ -59,17 +74,23 @@ export default function TvModal({ onClose }: TvModalProps) {
     return () => { cancelAnimationFrame(rafRef.current); clearTimeout(t); };
   }, [switching, channel]);
 
-  // keyboard: Esc closes, ←/→ change channel, number keys jump
+  // keyboard: Esc closes, arrows change channel, number keys jump
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
       else if (e.key === 'ArrowRight') next();
       else if (e.key === 'ArrowLeft') prev();
-      else if (/^[1-9]$/.test(e.key)) { const i = +e.key - 1; if (i < TV_CHANNELS.length) goChannel(i); }
+      else if (/^[1-9]$/.test(e.key)) {
+        const i = +e.key - 1;
+        if (i < TV_CHANNELS.length) goChannel(i);
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  });
+  }, [onClose, next, prev, goChannel]);
+
+  // constant screen size - depends only on the viewport, never on the clip
+  const screenWidth = `min(100%, ${(MAX_H * SCREEN_RATIO).toFixed(2)}vh)`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop"
@@ -80,22 +101,25 @@ export default function TvModal({ onClose }: TvModalProps) {
         @keyframes tvOn { from{transform:scaleY(0.02);opacity:0} to{transform:scaleY(1);opacity:1} }
       `}</style>
 
-      <div className="slide-up-modal w-full" style={{ maxWidth: 760 }}>
+      <div className="slide-up-modal relative w-full" style={{ maxWidth: 860 }}>
         {/* wooden TV cabinet */}
         <div style={{
           background: 'linear-gradient(150deg,#2b2620 0%,#1c1813 100%)',
           border: '1px solid rgba(120,90,50,0.35)',
-          borderRadius: 20, padding: 22,
+          borderRadius: 20, padding: 20,
           boxShadow: '0 0 60px rgba(62,169,255,0.15), 0 30px 80px rgba(0,0,0,0.8)',
         }}>
           {/* screen bezel */}
           <div style={{
             background: '#0a0a0e', borderRadius: 16, padding: 12,
             boxShadow: 'inset 0 0 40px rgba(0,0,0,0.9)',
+            display: 'flex', justifyContent: 'center',
           }}>
-            {/* the screen — 4:3 */}
+            {/* the screen - FIXED size, identical on every channel */}
             <div style={{
-              position: 'relative', width: '100%', aspectRatio: '4 / 3',
+              position: 'relative',
+              width: screenWidth,
+              aspectRatio: String(SCREEN_RATIO),
               borderRadius: 12, overflow: 'hidden', background: '#05060a',
               animation: 'tvOn 0.35s ease',
             }}>
@@ -106,43 +130,48 @@ export default function TvModal({ onClose }: TvModalProps) {
               {/* big faint brand watermark behind the video */}
               <div style={{
                 position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontFamily: 'monospace', fontWeight: 800, fontSize: 40, letterSpacing: '0.1em',
+                fontFamily: 'monospace', fontWeight: 800, fontSize: 'clamp(18px,3.4vw,40px)',
+                letterSpacing: '0.1em', textAlign: 'center', padding: '0 12px',
                 color: `${ch.accent}22`,
               }}>{ch.brand.toUpperCase()}</div>
 
-              {/* the reel video (drop files in public/tv/videos) */}
+              {/* the reel video - contain fits the whole clip inside the fixed
+                  screen, so nothing is ever cropped or cut short */}
               {!switching && (
                 <video
                   key={ch.id}
                   src={ch.video}
-                  autoPlay muted loop playsInline
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                  autoPlay muted loop playsInline preload="metadata"
+                  style={{
+                    position: 'absolute', inset: 0, width: '100%', height: '100%',
+                    objectFit: 'contain', background: '#05060a',
+                  }}
                 />
               )}
 
-              {/* client logo — top-left */}
+              {/* client logo - top-left */}
               {!switching && (
-                <div style={{ position: 'absolute', top: 14, left: 16, zIndex: 3 }}>
+                <div style={{ position: 'absolute', top: 12, left: 14, zIndex: 3 }}>
                   <ChannelLogo logo={ch.logo} brand={ch.brand} accent={ch.accent} />
                 </div>
               )}
 
-              {/* channel bug — top-right */}
+              {/* channel bug - top-right */}
               {!switching && (
                 <div style={{
-                  position: 'absolute', top: 14, right: 16, zIndex: 3,
-                  fontFamily: 'monospace', fontSize: 15, fontWeight: 700, color: '#fff',
-                  background: 'rgba(0,0,0,0.45)', padding: '3px 9px', borderRadius: 4,
+                  position: 'absolute', top: 12, right: 14, zIndex: 3,
+                  fontFamily: 'monospace', fontSize: 14, fontWeight: 700, color: '#fff',
+                  background: 'rgba(0,0,0,0.5)', padding: '3px 9px', borderRadius: 4,
                   textShadow: '0 0 8px rgba(0,0,0,0.8)',
                 }}>CH {String(channel + 1).padStart(2, '0')}</div>
               )}
 
-              {/* tagline — bottom-left */}
+              {/* tagline - bottom-left */}
               {!switching && ch.tagline && (
                 <div style={{
-                  position: 'absolute', bottom: 14, left: 16, zIndex: 3,
-                  fontFamily: 'monospace', fontSize: 13, color: '#dfeeff',
-                  background: 'rgba(0,0,0,0.4)', padding: '3px 9px', borderRadius: 4,
+                  position: 'absolute', bottom: 12, left: 14, zIndex: 3,
+                  fontFamily: 'monospace', fontSize: 12, color: '#dfeeff',
+                  background: 'rgba(0,0,0,0.45)', padding: '3px 9px', borderRadius: 4,
                 }}>{ch.tagline}</div>
               )}
 
@@ -170,7 +199,7 @@ export default function TvModal({ onClose }: TvModalProps) {
           </div>
 
           {/* control panel */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 18, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16, flexWrap: 'wrap' }}>
             {/* channel buttons */}
             <div style={{ display: 'flex', gap: 8, flex: 1, flexWrap: 'wrap' }}>
               {TV_CHANNELS.map((c, i) => {
@@ -199,23 +228,23 @@ export default function TvModal({ onClose }: TvModalProps) {
 
             {/* prev / next / power */}
             <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={prev} className="font-mono" style={ctrlBtn}>◀</button>
-              <button onClick={next} className="font-mono" style={ctrlBtn}>▶</button>
-              <button onClick={onClose} className="font-mono" style={{ ...ctrlBtn, borderColor: 'rgba(255,45,120,0.5)', color: '#ff6a9a' }}>⏻</button>
+              <button onClick={prev} className="font-mono" style={ctrlBtn}>{'\u25C0'}</button>
+              <button onClick={next} className="font-mono" style={ctrlBtn}>{'\u25B6'}</button>
+              <button onClick={onClose} className="font-mono" style={{ ...ctrlBtn, borderColor: 'rgba(255,45,120,0.5)', color: '#ff6a9a' }}>{'\u23FB'}</button>
             </div>
           </div>
 
           {/* now-playing label */}
           <div className="font-mono" style={{ marginTop: 12, fontSize: 12, color: '#8b6fa8', textAlign: 'center' }}>
-            {switching ? 'TUNING…' : <>NOW PLAYING · <span style={{ color: ch.accent }}>{ch.brand}</span></>}
-            <span style={{ opacity: 0.5 }}>   ·   use ← → or number keys</span>
+            {switching ? 'TUNING...' : <>NOW PLAYING {'\u00B7'} <span style={{ color: ch.accent }}>{ch.brand}</span></>}
+            <span style={{ opacity: 0.5 }}>{'   \u00B7   '}use arrows or number keys</span>
           </div>
         </div>
 
         {/* close hint outside cabinet */}
         <button onClick={onClose}
           className="absolute -top-10 right-0 font-mono text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-1 rounded-lg border border-border glass-dark">
-          ✕ CLOSE
+          {'\u2715'} CLOSE
         </button>
       </div>
     </div>
