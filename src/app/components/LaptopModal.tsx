@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 
 interface LaptopModalProps {
@@ -16,11 +16,10 @@ interface Project {
   tech: string[];
   description: string;
   useCase: string;
-  url: string;
+  url: string;          // full URL, including https://
   color: string;
 }
 
-// TODO: replace each `url` with your real GitHub repo or live link.
 const PROJECTS: Project[] = [
   {
     id: 'velpack',
@@ -29,7 +28,7 @@ const PROJECTS: Project[] = [
     tech: ['React.js', 'Tailwind CSS', 'Node.js'],
     description: 'Modern website for a packaging company, showcasing its brand differentiation from competitors.',
     useCase: 'Built to set Velpack apart in a crowded market - a clean, responsive site that communicates its strengths, deployed and hosted on the cloud.',
-    url: 'github.com/ayaanbhoje',
+    url: 'https://www.velpack.com/',
     color: '#00F5FF',
   },
   {
@@ -39,7 +38,7 @@ const PROJECTS: Project[] = [
     tech: ['React.js', 'Tailwind CSS', 'JavaScript'],
     description: 'Dynamic film studio portfolio site with extensive visual design and custom animations.',
     useCase: 'Presents the studio\'s film work through an engaging front-end experience powered by custom JavaScript animations and rich visual design.',
-    url: 'github.com/ayaanbhoje',
+    url: 'https://www.kathaamaltas.com/',
     color: '#FF2D78',
   },
   {
@@ -49,7 +48,7 @@ const PROJECTS: Project[] = [
     tech: ['React.js', 'Tailwind CSS', 'Node.js'],
     description: 'Modern, trendy website for a marketing firm to build brand awareness and attract clients.',
     useCase: 'Implemented responsive design and interactive UI/UX elements to boost engagement and turn visitors into leads.',
-    url: 'github.com/ayaanbhoje',
+    url: 'https://www.plumperch.co/',
     color: '#A855F7',
   },
   {
@@ -59,7 +58,7 @@ const PROJECTS: Project[] = [
     tech: ['React.js', 'Tailwind CSS', 'Node.js', 'GCP'],
     description: 'Full-stack real estate website showcasing housing options and building company awareness.',
     useCase: 'A browsable, responsive property showcase designed to drive enquiries - successfully deployed and hosted on Google Cloud Platform.',
-    url: 'github.com/ayaanbhoje',
+    url: 'https://astravantrealty.com/',
     color: '#FFB347',
   },
 ];
@@ -75,6 +74,28 @@ const SKILLS = [
   { name: 'Automation (n8n / Pabbly)', level: 85, color: '#FF2D78' },
   { name: 'Figma / Design', level: 80, color: '#FFB347' },
 ];
+
+/* pretty-print a URL for display: strip protocol, www and trailing slash */
+function displayUrl(url: string) {
+  return url.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
+}
+
+/* live HH:MM clock with a blinking colon - matches the desk clock */
+function useLiveClock() {
+  const [time, setTime] = useState('');
+  const [colon, setColon] = useState(true);
+  useEffect(() => {
+    const upd = () => {
+      const n = new Date();
+      setTime(`${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`);
+    };
+    upd();
+    const a = setInterval(upd, 1000);
+    const b = setInterval(() => setColon(c => !c), 500);
+    return () => { clearInterval(a); clearInterval(b); };
+  }, []);
+  return colon ? time : time.replace(':', ' ');
+}
 
 /* project logo image with a graceful letter-fallback if the file is missing */
 function ProjectLogo({ project, size }: { project: Project; size: number }) {
@@ -99,6 +120,7 @@ function ProjectLogo({ project, size }: { project: Project; size: number }) {
 export default function LaptopModal({ onClose }: LaptopModalProps) {
   const [view, setView] = useState<LaptopView>('desktop');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const clock = useLiveClock();
 
   return (
     <div
@@ -162,7 +184,7 @@ export default function LaptopModal({ onClose }: LaptopModalProps) {
                   >
                     <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
                       style={{ background: 'linear-gradient(135deg, #00F5FF20, #00F5FF10)', border: '1px solid rgba(0,245,255,0.3)' }}>
-                      👤
+                      {'\u{1F464}'}
                     </div>
                     <span className="font-mono text-xs text-muted-foreground group-hover:text-primary transition-colors text-center">
                       about.sh
@@ -203,7 +225,7 @@ export default function LaptopModal({ onClose }: LaptopModalProps) {
                 <div className="font-mono text-xs text-muted-foreground">
                   NeoDesk OS v2.4.1
                 </div>
-                <div className="font-mono text-xs text-primary">21:42</div>
+                <div className="font-mono text-xs text-primary">{clock}</div>
               </div>
             </div>
           )}
@@ -226,7 +248,7 @@ export default function LaptopModal({ onClose }: LaptopModalProps) {
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-16 h-16 rounded-full flex items-center justify-center text-3xl"
                         style={{ background: 'linear-gradient(135deg, #00F5FF20, #FF2D7820)', border: '2px solid rgba(0,245,255,0.3)' }}>
-                        🧑‍💻
+                        {'\u{1F9D1}\u200D\u{1F4BB}'}
                       </div>
                       <div>
                         <h3 className="font-mono font-bold text-foreground">Ayaan Bhoje</h3>
@@ -310,9 +332,10 @@ export default function LaptopModal({ onClose }: LaptopModalProps) {
                       style={{ textShadow: `0 0 10px ${selectedProject.color}40` }}>
                       {selectedProject.name}
                     </h3>
-                    <p className="font-mono text-sm" style={{ color: selectedProject.color }}>
-                      {selectedProject.url}
-                    </p>
+                    <a href={selectedProject.url} target="_blank" rel="noopener noreferrer"
+                      className="font-mono text-sm hover:underline" style={{ color: selectedProject.color }}>
+                      {displayUrl(selectedProject.url)}
+                    </a>
                   </div>
                 </div>
 
@@ -357,8 +380,10 @@ export default function LaptopModal({ onClose }: LaptopModalProps) {
                 </div>
 
                 {/* CTA */}
-                <a href={`https://${selectedProject.url}`} target="_blank" rel="noopener noreferrer" className="neon-btn inline-block px-6 py-3 rounded-lg text-xs" style={{ borderColor: selectedProject.color, color: selectedProject.color }}>
-                  OPEN PROJECT &rarr;
+                <a href={selectedProject.url} target="_blank" rel="noopener noreferrer"
+                  className="neon-btn inline-block px-6 py-3 rounded-lg text-xs"
+                  style={{ borderColor: selectedProject.color, color: selectedProject.color }}>
+                  OPEN WEBSITE &rarr;
                 </a>
               </div>
             </div>

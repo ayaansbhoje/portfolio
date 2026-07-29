@@ -17,7 +17,7 @@ import { DeskLamp } from './room/DeskLamp';
 import { Speaker, Headphones, Mug, DeskClock } from './room/DeskProps';
 import { Shelf } from './room/Shelf';
 import { Helmet, ShelfPlant, Sneaker } from './room/ShelfDecor';
-import { PosterFrame, LavaLamp, IdeaBoard, FloorLamp, JerseyFrame } from './room/Decor';
+import { PosterFrame, LavaLamp, IdeaBoard, FloorLamp } from './room/Decor';
 import { RecordConsole, Turntable, AlbumStand } from './room/RecordCorner';
 import { Laptop, Phone, Journal } from './room/Interactive';
 import { RetroTV } from './room/RetroTV';
@@ -188,15 +188,15 @@ export default function RoomScene({ timeOfDay, onSelect, musicPlaying = false, r
       <Sneaker position={[-5.05, 5.11, -5.4]} rotation={[0, 0.5, 0]} />
       <Sneaker position={[-4.68, 5.11, -5.5]} rotation={[0, -0.35, 0]} />
 
-      {/* LEFT wall (x=-8), above the bed:
-          → framed football jersey (blue/red stripes · AYAAN · 14) replaces the old poster-3 frame
-          → poster-4 frame stays */}
-      <JerseyFrame position={[-7.9, 3.7, -3.3]} rotation={[0, Math.PI / 2, 0]} w={1.5} h={2.1} name="AYAAN" number="14" />
-      <PosterFrame position={[-7.9, 3.7, -1.45]} rotation={[0, Math.PI / 2, 0]} w={1.5} h={2.1} src="/art/poster-4.png" accent={accent} />
+      {/* LEFT wall (x=-8), above the bed — two matching movie/game poster frames
+          → "Laakhon Mein Ek" poster (was the framed jersey)
+          → RDR2 wallpaper poster beside it */}
+      <PosterFrame position={[-7.9, 3.7, -3.3]} rotation={[0, Math.PI / 2, 0]} w={1.5} h={2.1} src="/assets/laakhon_main_Ek_movie.jpg" accent={accent} />
+      <PosterFrame position={[-7.9, 3.7, -1.45]} rotation={[0, Math.PI / 2, 0]} w={1.5} h={2.1} src="/assets/rdr_2_wallpaper.png" accent={accent} />
 
       {/* two large poster frames filling the wall to the right of the desk.
-          The frame nearest the record corner shows the Fred Again poster. */}
-      <PosterFrame position={[4.75, 3.05, -5.8]} w={1.7} h={2.9} src="/art/poster-1.png" accent={accent} />
+          Nearest the record corner = Fred Again poster; the other = Pursuit poster. */}
+      <PosterFrame position={[4.75, 3.05, -5.8]} w={1.7} h={2.9} src="/assets/pursuit_poster.jpg" accent={accent} />
       <PosterFrame position={[6.65, 3.05, -5.8]} w={1.7} h={2.9} src="/assets/fred_agai_poster.jpg" accent={accent} />
       {/* matching lit shelf above the frames (gallery-style down-lighting) */}
       <Shelf position={[5.7, 4.85, -5.5]} width={3.95} fixtures={4} reach={4.2} />

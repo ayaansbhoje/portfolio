@@ -42,11 +42,11 @@ export const ALBUMS: Album[] = [
   {
     // TODO: 4th album — replace artist/title/year/accent/cover + track titles & src
     // once you add the files to /public/music and /public/assets.
-    id: 'album4', artist: 'Coming Soon', title: 'Untitled', year: '',
-    accent: '#b060ff', cover: '/art/album-4.png',
+    id: 'Actual Life 3', artist: 'Fred Again', title: 'Untitled', year: '2022',
+    accent: '#b060ff', cover: '/assets/fred_again_cover.jpeg',
     tracks: [
-      { id: 'a4-1', title: 'Track One', src: '/music/placeholder-1.mp3' },
-      { id: 'a4-2', title: 'Track Two', src: '/music/placeholder-2.mp3' },
+      { id: 'a4-1', title: 'Clara', src: '/music/Fred_again_Clara.mp3' },
+      { id: 'a4-2', title: 'Delilah', src: '/music/Fred_again_Delilah.mp3' },
     ],
   },
 ];
