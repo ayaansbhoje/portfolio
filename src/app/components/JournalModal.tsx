@@ -86,7 +86,7 @@ const JOURNAL_PAGES: JournalPage[] = [
     deliverables: ['Video Editing', 'Copywriting', 'Social Strategy', 'After Effects', 'Content Design'],
     moodboard: [
       { src: '/assets/cnbc_journal_1.png', label: 'Reel frames' },
-      { src: '/assets/cnbc_journal.mp4', label: 'Reel edit' },
+      { src: '/assets/cnbc_visual_2_final.mp4', label: 'Reel edit' },
       { src: '/assets/cnbc_Journal_3.png', label: 'Brand kit' },
     ],
   },
